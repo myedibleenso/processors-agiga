@@ -113,7 +113,11 @@ object AgigaReader extends App with LazyLogging {
    * Generate a string representation of a sentence's dependencies
    */
   def depsToString(deps:DirectedGraph[String], tokens:Array[String]):String = {
-    deps.allEdges.map(triple => s"${tokens(triple._1)}_${triple._3}_${tokens(triple._2)}").mkString(" ")
+    // include roots in deps representation
+    val rootStr = deps.roots.map(r => s"??_root_${tokens(r)}").mkString(" ")
+    // everything but roots...
+    val depStr = deps.allEdges.map(triple => s"${tokens(triple._1)}_${triple._3}_${tokens(triple._2)}").mkString(" ")
+    s"$depStr $rootStr"
   }
 
   def mkOutput(f: File, outDir: File, view: String):Unit = {
