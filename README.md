@@ -18,7 +18,7 @@ Why spend the time and resources parsing and annotating over 183 million sentenc
 
 Everything is configured in the [`application.conf`](src/main/resources/scala/application.conf) file.
 
-1. Change the `view` property to "lemma"  
+1. Change the `view` property to "lemmas"  
 
 2. Change the `inputDir` property to wherever your copy of `agiga` is nestled on your disk  
 
@@ -32,10 +32,17 @@ sbt "runMain sem.AgigaReader"
 ```
 
 ### Options for "view"
-1. "lemma" for lemmas
-2. "entity" for named entity labels
-3. "tag" for part-of-speech tags
-4. "word" for words
+| Value         	| Description 	|
+|---------------	|-------------	|
+| "words"       	| word form of each token            	|
+| "lemmas"      	| lemma form of each token            	|
+| "tags"        	| PoS tag of each token             	|
+| "entities"    	| NE labels of each token     	|
+| "deps"        	| `<word form of head>_<relation>_<word form of dependent>`           	|
+| "lemma-deps"  	| `<lemmatized head>_<relation>_<lemmatized dependent>`         	|
+| "tag-deps"    	| `<pos tag of head>_<relation>_<pos tag of dependent>`         	|
+| "entity-deps" 	| `<NE label of head>_<relation>_<NE label of dependent>`           	|
+|               	|             	|
 
 
 ## TODO
