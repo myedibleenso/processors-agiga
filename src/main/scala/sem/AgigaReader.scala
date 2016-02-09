@@ -9,7 +9,10 @@ import edu.arizona.sista.processors.{DependencyMap, Document, Sentence}
 import edu.arizona.sista.struct.DirectedGraph
 import scala.collection.parallel.ForkJoinTaskSupport
 
-
+// For working with the agiga deps
+abstract class DependencyRepresentation
+case class Root(i:Int) extends DependencyRepresentation
+case class Edge(headIndex:Int, depIndex:Int, relation: String) extends DependencyRepresentation
 
 object AgigaReader extends App with LazyLogging {
 
@@ -18,11 +21,6 @@ object AgigaReader extends App with LazyLogging {
   val outDir = new File(config.getString("outDir"))
   val view = config.getString("view")
   val nthreads = config.getInt("nthreads")
-
-  // For working with the agiga deps
-  abstract class DependencyRepresentation
-  case class Root(i:Int) extends DependencyRepresentation
-  case class Edge(headIndex:Int, depIndex:Int, relation: String) extends DependencyRepresentation
 
   def mkDependencies(s: AgigaSentence):DirectedGraph[String] = {
     // collapsed dependencies...
@@ -146,6 +144,11 @@ object AgigaReader extends App with LazyLogging {
   // create dir if it doesn't exist...
   outDir.mkdirs()
 
+  logger.info(s"Input: $inDir")
+  logger.info(s"Output folder: $outDir")
+  logger.info(s"View: $view")
+  logger.info(s"Threads to use: $nthreads")
+
   // filter out any non- *.xml.gz files in the directory
   // and parallelize the Array of valid Files...
   val files = inDir
@@ -155,11 +158,6 @@ object AgigaReader extends App with LazyLogging {
 
   // limit parallelization
   files.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(nthreads))
-
-  logger.info(s"View: $view")
-  logger.info(s"Input: $inDir")
-  logger.info(s"Output folder: $outDir")
-  logger.info(s"Threads to use: $nthreads")
 
   // process files
   files.foreach(f => mkOutput(f, outDir, view))
