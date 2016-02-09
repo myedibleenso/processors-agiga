@@ -147,17 +147,19 @@ object AgigaReader extends App with LazyLogging {
   logger.info(s"Input: $inDir")
   logger.info(s"Output folder: $outDir")
   logger.info(s"View: $view")
-  logger.info(s"Threads to use: $nthreads")
-
-  // filter out any non- *.xml.gz files in the directory
-  // and parallelize the Array of valid Files...
-  val files = inDir
-    .listFiles
+  
+  val files = inDir.listFiles
+    // filter out any non- *.xml.gz files in the directory
     .filter(_.getName.endsWith(".xml.gz"))
+    // and parallelize the Array of valid Files...
     .par
+
+  logger.info(s"Files to process: ${files.size}")
 
   // limit parallelization
   files.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(nthreads))
+
+  logger.info(s"Threads to use: $nthreads")
 
   // process files
   files.foreach(f => mkOutput(f, outDir, view))
