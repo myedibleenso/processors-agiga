@@ -109,6 +109,13 @@ object AgigaReader extends App with LazyLogging {
     new Document(sentences.toArray)
   }
 
+  /**
+   * Generate a string representation of a sentence's dependencies
+   */
+  def depsToString(deps:DirectedGraph[String], tokens:Array[String]):String = {
+    deps.allEdges.map(triple => s"${tokens(triple._1)}_${triple._3}_${tokens(triple._2)}").mkString(" ")
+  }
+
   def mkOutput(f: File, outDir: File, view: String):Unit = {
 
     // create a Processors Document
@@ -116,14 +123,39 @@ object AgigaReader extends App with LazyLogging {
 
     // get output representation
     val output = view.toLowerCase match {
-      case words if words.startsWith("word") =>
+      case "words" =>
         doc.sentences.map(_.words.mkString(" ")).mkString("\n")
-      case tags if tags.startsWith("tag") =>
+      case "tags" =>
         doc.sentences.map(_.tags.get.mkString(" ")).mkString("\n")
-      case lemma if lemma.startsWith("lemma") =>
+      case "lemmas" =>
         doc.sentences.map(_.lemmas.get.mkString(" ")).mkString("\n")
-      case entities if entities.startsWith("entities") || entities.startsWith("ner") =>
+      case entities if entities == "entities" || entities == "ner" =>
         doc.sentences.map(_.entities.get.mkString(" ")).mkString("\n")
+      // these are unordered
+      case "lemma-deps" =>
+        doc.sentences.map { s =>
+          val deps = s.dependencies.get
+          val lemmas = s.lemmas.get
+          depsToString(deps, lemmas)
+        }.mkString("\n")
+      case "tag-deps" =>
+        doc.sentences.map { s =>
+          val deps = s.dependencies.get
+          val tags = s.tags.get
+          depsToString(deps, tags)
+        }.mkString("\n")
+      case "entity-deps" =>
+        doc.sentences.map { s =>
+          val deps = s.dependencies.get
+          val entities = s.entities.get
+          depsToString(deps, entities)
+        }.mkString("\n")
+      case "dep" =>
+        doc.sentences.map { s =>
+          val deps = s.dependencies.get
+          val words = s.words
+          depsToString(deps, words)
+        }.mkString("\n")
     }
 
     // prepare output file
