@@ -2,7 +2,7 @@
 
 ## What is it?
 
-Just a way to convert [`agiga`](https://github.com/mgormley/agiga) data into a `processsors` `Document`.  
+Just a way to convert [`agiga`](https://github.com/mgormley/agiga) data into a `processors` `Document`.
 
 Why spend the time and resources parsing and annotating over 183 million sentences when it has already been done?
 
@@ -11,6 +11,15 @@ Why spend the time and resources parsing and annotating over 183 million sentenc
 1. [Java 8](http://www.oracle.com/technetwork/java/javase/overview/java8-2100321.html)
 2. [sbt](http://www.scala-sbt.org)
 3. [A copy of the Annotated English Gigaword](https://catalog.ldc.upenn.edu/LDC2012T21)
+
+## Reading an annotated English Gigaword `xml` file
+
+```scala
+import org.clulab.agiga
+
+// build a processors.Document
+val doc = agiga.toDocument("path/to/agiga/xml/ltw_eng_200705.xml.gz")
+```
 
 ## Running `AgigaReader`
 
