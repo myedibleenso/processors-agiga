@@ -64,11 +64,8 @@ package object agiga {
     DirectedGraph[String](edges, roots)
   }
 
-  /** Converts agiga annotations to a Processors Document
-    * and then generates a text representation of that Document using a specified "view"
-    * view: words, lemmas, tags, entities, etc
-    */
-  def toDocument(filename: String): Document = {
+  /** Converts agiga annotations to a Processors Document sequence */
+  def toDocuments(filename: String): Seq[Document] = {
     // Setup Gigaword API Preferences
     val prefs = new AgigaPrefs()
     // label for agiga dependency type
@@ -76,48 +73,55 @@ package object agiga {
     prefs.setWord(true)
     // Retrieve all gigaword documents contained within a given file
     val reader = new StreamingDocumentReader(filename, prefs)
-    val sentences = for {
-      agigaDoc <- reader.iterator().asScala
-      s <- agigaDoc.getSents.asScala
-      tokens = s.getTokens.asScala
-      // words
-      words = tokens.map(_.getWord)
-      // lemmas
-      lemmas = tokens.map(_.getLemma)
-      // pos tags
-      posTags = tokens.map(_.getPosTag)
-      // ner labels
-      nerLabels = tokens.map(_.getNerTag)
-      // offsets
-      startOffsets = tokens.map(_.getCharOffBegin)
-      endOffsets = tokens.map(_.getCharOffEnd)
-      deps = mkDependencies(s)
-    } yield {
 
-      Sentence(
-        /** Actual tokens in this sentence */
-        words.toArray,
-        /** Start character offsets for the words; start at 0 */
-        startOffsets.toArray,
-        /** End character offsets for the words; start at 0 */
-        endOffsets.toArray,
-        /** POS tags for words (OPTION) */
-        tags = Some(posTags.toArray),
-        /** Lemmas (OPTION) */
-        lemmas = Some(lemmas.toArray),
-        /** NE labels (OPTION) */
-        entities = Some(nerLabels.toArray),
-        /** Normalized values of named/numeric entities, such as dates (OPTION) */
-        norms = None,
-        /** Shallow parsing labels (OPTION) */
-        chunks = None,
-        /** Constituent tree of this sentence; includes head words Option[Tree[String]] */
-        tree = None,
-        /** *Dependencies */
-        deps = GraphMap(Map(GraphMap.STANFORD_COLLAPSED -> deps))
-      )
+    val docs: Iterator[Document] = reader.iterator().asScala.map { agigaDoc =>
+
+      val sentences = for {
+        s <- agigaDoc.getSents.asScala
+        tokens = s.getTokens.asScala
+        // words
+        words = tokens.map(_.getWord)
+        // lemmas
+        lemmas = tokens.map(_.getLemma)
+        // pos tags
+        posTags = tokens.map(_.getPosTag)
+        // ner labels
+        nerLabels = tokens.map(_.getNerTag)
+        // offsets
+        startOffsets = tokens.map(_.getCharOffBegin)
+        endOffsets = tokens.map(_.getCharOffEnd)
+        deps = mkDependencies(s)
+      } yield {
+
+        Sentence(
+          /** Actual tokens in this sentence */
+          words.toArray,
+          /** Start character offsets for the words; start at 0 */
+          startOffsets.toArray,
+          /** End character offsets for the words; start at 0 */
+          endOffsets.toArray,
+          /** POS tags for words (OPTION) */
+          tags = Some(posTags.toArray),
+          /** Lemmas (OPTION) */
+          lemmas = Some(lemmas.toArray),
+          /** NE labels (OPTION) */
+          entities = Some(nerLabels.toArray),
+          /** Normalized values of named/numeric entities, such as dates (OPTION) */
+          norms = None,
+          /** Shallow parsing labels (OPTION) */
+          chunks = None,
+          /** Constituent tree of this sentence; includes head words Option[Tree[String]] */
+          tree = None,
+          /** *Dependencies */
+          deps = GraphMap(Map(GraphMap.STANFORD_COLLAPSED -> deps))
+        )
     }
-    new Document(sentences.toArray)
+    val doc = new Document(sentences.toArray)
+    // store the doc's ID
+    doc.id = Some(agigaDoc.getDocId)
+    doc
+    }
+    docs.toVector
   }
 
   /**

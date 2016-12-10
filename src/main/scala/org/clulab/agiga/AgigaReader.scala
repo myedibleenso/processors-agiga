@@ -17,58 +17,60 @@ object AgigaReader extends App with LazyLogging {
   def mkOutput(f: File, outDir: File, view: String): Unit = {
 
     // create a Processors Document
-    val doc = toDocument(f.getAbsolutePath)
+    val docs = toDocuments(f.getAbsolutePath)
 
-    // get output representation
-    val output = view.toLowerCase match {
-      case "words" =>
-        doc.sentences.map(_.words.mkString(" ")).mkString("\n")
-      case "tags" =>
-        doc.sentences.map(_.tags.get.mkString(" ")).mkString("\n")
-      case "lemmas" =>
-        doc.sentences.map(_.lemmas.get.mkString(" ")).mkString("\n")
-      case entities if entities == "entities" || entities == "ner" =>
-        doc.sentences.map(_.entities.get.mkString(" ")).mkString("\n")
-      // these are unordered
-      case "lemma-deps" =>
-        doc.sentences.map { s =>
-          val deps = s.dependencies.get
-          val lemmas = s.lemmas.get
-          depsToString(deps, lemmas)
-        }.mkString("\n")
-      case "tag-deps" =>
-        doc.sentences.map { s =>
-          val deps = s.dependencies.get
-          val tags = s.tags.get
-          depsToString(deps, tags)
-        }.mkString("\n")
-      case "entity-deps" =>
-        doc.sentences.map { s =>
-          val deps = s.dependencies.get
-          val entities = s.entities.get
-          depsToString(deps, entities)
-        }.mkString("\n")
-      case "dep" =>
-        doc.sentences.map { s =>
-          val deps = s.dependencies.get
-          val words = s.words
-          depsToString(deps, words)
-        }.mkString("\n")
+    for (doc <- docs) {
+      // get output representation
+      val output = view.toLowerCase match {
+        case "words" =>
+          doc.sentences.map(_.words.mkString(" ")).mkString("\n")
+        case "tags" =>
+          doc.sentences.map(_.tags.get.mkString(" ")).mkString("\n")
+        case "lemmas" =>
+          doc.sentences.map(_.lemmas.get.mkString(" ")).mkString("\n")
+        case entities if entities == "entities" || entities == "ner" =>
+          doc.sentences.map(_.entities.get.mkString(" ")).mkString("\n")
+        // these are unordered
+        case "lemma-deps" =>
+          doc.sentences.map { s =>
+            val deps = s.dependencies.get
+            val lemmas = s.lemmas.get
+            depsToString(deps, lemmas)
+          }.mkString("\n")
+        case "tag-deps" =>
+          doc.sentences.map { s =>
+            val deps = s.dependencies.get
+            val tags = s.tags.get
+            depsToString(deps, tags)
+          }.mkString("\n")
+        case "entity-deps" =>
+          doc.sentences.map { s =>
+            val deps = s.dependencies.get
+            val entities = s.entities.get
+            depsToString(deps, entities)
+          }.mkString("\n")
+        case "dep" =>
+          doc.sentences.map { s =>
+            val deps = s.dependencies.get
+            val words = s.words
+            depsToString(deps, words)
+          }.mkString("\n")
+      }
+
+      // prepare output file
+      //val fName = f.getName.replace(".xml.gz", "")
+      val outFile = new File(outDir, s"${doc.id.get}-$view.txt")
+      val pw = new PrintWriter(outFile)
+      // write processed text to file
+      pw.write(output)
+      pw.close()
+      // compress file
+      compress(outFile)
+      // delete uncompress out file
+      outFile.delete
+
+      logger.info(s"Successfully processed ${f.getName}")
     }
-
-    // prepare output file
-    val fName = f.getName.replace(".xml.gz", "")
-    val outFile = new File(s"$outDir/$fName-$view.txt")
-    val pw = new PrintWriter(outFile)
-    // write processed text to file
-    pw.write(output)
-    pw.close()
-    // compress file
-    compress(outFile)
-    // delete uncompress out file
-    outFile.delete
-
-    logger.info(s"Successfully processed ${f.getName}")
   }
 
   // create dir if it doesn't exist...
